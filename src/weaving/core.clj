@@ -35,8 +35,8 @@
               #((apply partial f (concat %& args)))))
 
 (defn •|
-  "Returns a function whose arguments are calls to functions that will
-  be passed the woven value(s)."
+  "Transforms a function whose arguments become calls to functions that
+  will be passed the woven value."
   [f & fs]
   (fn [& args]
     (apply f (map #(apply % args) fs))))
