@@ -26,6 +26,8 @@ Just like **threading macros** in Clojure end with `->` or `->>`, **weaving func
 ;; => "The string slime"
 ```
 
+## [API doc](https://tristefigure.github.io/weaving/)
+
 ## List of combinators
 
 - conditionals: `if|`, `when|`, `or|`, `and|` & `not|`.
