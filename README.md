@@ -9,6 +9,15 @@ Just like **threading macros** in Clojure end with `->` or `->>`, **weaving func
 ## Usage
 
 ```clojure
+[weaving "0.1.2"]
+```
+
+```clojure
+(require '[weaving.core :refer :all])
+```
+
+## Showcase
+```clojure
 (def f
   (->| (when| number? (| * 2))
        (if| (or| string? symbol?)
