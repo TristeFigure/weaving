@@ -4,7 +4,7 @@
 
 This library's purpose is to provide a set of simple function combinators to ease out the day-to-day wrangling of Clojure code.
 
-Just like **threading macros** in Clojure end with `->` or `->>`, **weaving functions** end with `|`.
+Just like **threading macros** in Clojure end with an arrow, **weaving functions** end with `|`.
 
 ## Usage
 
@@ -17,6 +17,7 @@ Just like **threading macros** in Clojure end with `->` or `->>`, **weaving func
 ```
 
 ## Showcase
+
 ```clojure
 (def f
   (->| (when| number? (| * 2))
@@ -35,7 +36,7 @@ Just like **threading macros** in Clojure end with `->` or `->>`, **weaving func
 ;; => "The string slime"
 ```
 
-## [API doc](https://tristefigure.github.io/weaving/)
+## [API doc](https://tristefigure.github.io/weaving/index.html)
 
 ## List of combinators
 
