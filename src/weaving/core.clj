@@ -1,5 +1,5 @@
 (ns weaving.core
-  (:require [arity.core :refer [arities fake-arity max-arity min-arity]]))
+  (:require [arity.core :refer [arities fake-arities max-arity min-arity]]))
 
 (defn ?|
   "Returns a function `(g x)` that returns `(= x v)`."
@@ -10,18 +10,18 @@
   "Returns a function that behaves like `complement` but preserves
   arity."
   [f]
-  (fake-arity (arities f) (complement f)))
+  (fake-arities (arities f) (complement f)))
 
 (defn *|
   "Returns a function that behaves like `juxt` but preserves arity."
   [& fns]
-  (fake-arity (->> fns (mapcat arities) distinct sort)
+  (fake-arities (->> fns (mapcat arities) distinct sort)
               #(apply (apply juxt fns) %&)))
 
 (defn ||
   "Returns a function that behaves like `partial` but preserves arity."
   [f & args]
-  (fake-arity (map #(- % (count args))
+  (fake-arities (map #(- % (count args))
                    (arities f))
               #((apply partial f (concat args %&)))))
 
@@ -30,7 +30,7 @@
   are added to the beginning of the parameter list rather than the end.
   Preserves arity."
   [f & args]
-  (fake-arity (map #(- % (count args))
+  (fake-arities (map #(- % (count args))
                    (arities f))
               #((apply partial f (concat %& args)))))
 
@@ -42,9 +42,9 @@
     (apply f (map #(apply % args) fs))))
 
 (defn arity-comp
-  "Returns a function that behaves like `comp` but preserves arity."
+  "Composes functions like `comp` but preserves arity."
   [& fns]
-  (fake-arity (-> fns last arities)
+  (fake-arities (-> fns last arities)
               #(apply (apply comp fns)
                       %&)))
 
@@ -59,14 +59,14 @@
   "Returns a function that behaves like `constantly` but has 1 for
   arity."
   [v]
-  (fake-arity 1 (constantly v)))
+  (fake-arities 1 (constantly v)))
 
 (defn when|
   "Returns a function that will run the `fns` in order when `pred`
   succeeds or return the value that was passed in otherwise.
   Preserves arity."
   [pred & fns]
-  (fake-arity
+  (fake-arities
     (->> (cons pred fns) (mapcat arities) distinct sort)
     #(if (apply pred %&)
        (apply (apply ->| fns) %&)
@@ -83,7 +83,7 @@
                   (first %&)
                   %&)))
   ([pred f else]
-   (fake-arity
+   (fake-arities
      (->> [pred f else] (mapcat arities) distinct sort)
      #(if (apply pred %&)
         (apply f %&)
@@ -100,7 +100,7 @@
   passing to each one its argument before returning it.
   Preserves arity."
   [& fns]
-  (fake-arity
+  (fake-arities
     (->> fns (mapcat arities) distinct sort)
     #(do (last ((apply *| (map apply| fns)) %&))
          (if (> (count %&) 1)
@@ -113,7 +113,7 @@
   `false` or `nil`.
   Preserves arity."
   [& fns]
-  (fake-arity
+  (fake-arities
     (->> fns (mapcat arities) distinct sort)
     #(loop [[f & more] fns]
        (let [result (apply f %&)]
@@ -129,7 +129,7 @@
   than `false` or `nil`.
   Preserves arity."
   [& fns]
-  (fake-arity
+  (fake-arities
     (->> fns (mapcat arities) distinct sort)
     (fn [& args]
       (loop [[f & more] fns]
@@ -157,7 +157,7 @@
                                (if (wrapped-context? result)
                                  (unwrap-context result)
                                  result))))]
-    (fake-arity (arities f)
+    (fake-arities (arities f)
       #(apply wrap-f %&))))
 
 ;; TODO: document
@@ -178,7 +178,7 @@
                 [false false] (fn
                                 ([x]     (wrap-context [(f x) nil]))
                                 ([x ctx] (wrap-context [(f x) ctx]))))]
-    (fake-arity (arities new-f)
+    (fake-arities (arities new-f)
                 (fn [& args]
                   (let [r (apply (context-wrapper new-f)
                                  args)]
@@ -188,7 +188,13 @@
 (defn warp| [weaver warper]
   (fn [& fns]
     (apply weaver (map (fn [f]
-                         (fake-arity (arities f)
+                         (fake-arities (arities f)
                                      (fn [& args]
                                        (apply warper f args))))
                        fns))))
+;      ;   (if (even? x)
+;      ;     (f x)
+;      ;     x))
+;      ; inc
+;      )
+;    x))

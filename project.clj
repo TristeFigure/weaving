@@ -1,14 +1,14 @@
-(defproject weaving "0.1.2"
+(defproject weaving "0.1.3"
   :description "Combinators to weave Clojure functions together"
   :url "https://github.com/TristeFigure/weaving"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.9.0"]
-                 [arity "0.1.0"]]
+                 [arity "0.2.0"]]
   :profiles {:test {:dependencies
-                    [[org.clojars.tristefigure/shuriken "0.13.30"]]}
+                    [[org.clojars.tristefigure/shuriken "0.14.9"]]}
              :dev  {:dependencies
-                    [[org.clojars.tristefigure/shuriken "0.13.30"]
+                    [[org.clojars.tristefigure/shuriken "0.14.9"]
                      [codox-theme-rdash "0.1.2"]]}}
   :plugins [[lein-codox "0.10.3"]]
   :codox {:source-uri "https://github.com/TristeFigure/weaving/" \
