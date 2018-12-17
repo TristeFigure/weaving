@@ -3,8 +3,8 @@
 
 (defn ?|
   "Returns a function `(g x)` that returns `(= x v)`."
-  [v]
-  #(= % v))
+  [& args]
+  #(apply = % args))
 
 (defn not|
   "Returns a function that behaves like `complement` but preserves
@@ -14,9 +14,10 @@
 
 (defn *|
   "Returns a function that behaves like `juxt` but preserves arity."
-  [& fns]
-  (fake-arities (->> fns (mapcat arities) distinct sort)
-              #(apply (apply juxt fns) %&)))
+  [f & more-fns]
+  (let [fns (cons f more-fns)]
+    (fake-arities (->> fns (mapcat arities) distinct sort)
+                  #(apply (apply juxt fns) %&))))
 
 (defn ||
   "Returns a function that behaves like `partial` but preserves arity."
@@ -34,6 +35,7 @@
                    (arities f))
               #((apply partial f (concat %& args)))))
 
+;; TODO: rework
 (defn •|
   "Transforms a function whose arguments become calls to functions that
   will be passed the woven value."
@@ -43,10 +45,13 @@
 
 (defn arity-comp
   "Composes functions like `comp` but preserves arity."
-  [& fns]
-  (fake-arities (-> fns last arities)
-              #(apply (apply comp fns)
-                      %&)))
+  ([]  identity)
+  ([f] f)
+  ([f & more-fns]
+   (let [fns (cons f more-fns)]
+     (fake-arities (-> fns last arities)
+                   #(apply (apply comp fns)
+                           %&)))))
 
 (defn ->|
   "Returns a function that behaves like `comp` but composes functions
@@ -99,46 +104,53 @@
   "Returns a function that calls `fns` in order,
   passing to each one its argument before returning it.
   Preserves arity."
-  [& fns]
-  (fake-arities
-    (->> fns (mapcat arities) distinct sort)
-    #(do (last ((apply *| (map apply| fns)) %&))
-         (if (> (count %&) 1)
-           %&
-           (first %&)))))
+  ([] identity)
+  ([& fns]
+   (fake-arities
+     (->> fns (mapcat arities) distinct sort)
+     #(do (last ((apply *| (map apply| fns)) %&))
+          (if (> (count %&) 1)
+            %&
+            (first %&))))))
 
 (defn and|
   "Returns a function `f` that runs `fns` in order on the arguments of
   `f` in the style of `and`, i.e. breaking out of the chain upon
   `false` or `nil`.
   Preserves arity."
-  [& fns]
-  (fake-arities
-    (->> fns (mapcat arities) distinct sort)
-    #(loop [[f & more] fns]
-       (let [result (apply f %&)]
-         (if result
-           (if (seq more)
-             (recur more)
-             result)
-           result)))))
+  ([]  identity)
+  ([f] f)
+  ([f & more-fns]
+   (let [fns (cons f more-fns)]
+     (fake-arities
+       (->> fns (mapcat arities) distinct sort)
+       #(loop [[f & more] fns]
+          (let [result (apply f %&)]
+            (if result
+              (if (seq more)
+                (recur more)
+                result)
+              result)))))))
 
 (defn or|
   "Returns a function that runs `fns` in order in the style of `or`,
   i.e. breaking out of the chain if one returns something different
   than `false` or `nil`.
   Preserves arity."
-  [& fns]
-  (fake-arities
-    (->> fns (mapcat arities) distinct sort)
-    (fn [& args]
-      (loop [[f & more] fns]
-        (let [result (apply f args)]
-          (if result
-            result
-            (if (seq more)
-              (recur more)
-              result)))))))
+  ([]  identity)
+  ([f] f)
+  ([f & more-fns]
+   (let [fns (cons f more-fns)]
+     (fake-arities
+       (->> fns (mapcat arities) distinct sort)
+       (fn [& args]
+         (loop [[f & more] fns]
+           (let [result (apply f args)]
+             (if result
+               result
+               (if (seq more)
+                 (recur more)
+                 result)))))))))
 
 (defn- wrap-context [[form ctx]]
   [::context form ctx])

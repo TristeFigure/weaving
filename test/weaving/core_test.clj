@@ -38,7 +38,12 @@
 
 (deftest test-?|
   (is (= true  ((?| 1) 1)))
-  (is (= false ((?| 2) 1))))
+  (is (= false ((?| 2) 1)))
+  (testing "multiple equality"
+    (is (= true ((?| 2 (inc 1)) (+ 1 1)))))
+  (testing "edge cases"
+    (is (= true ((?|) 1)))
+    (is (thrown? clojure.lang.ArityException ((?|))))))
 
 (deftest test-not|
   (is (false? ((not| number?) 3)))
@@ -50,7 +55,9 @@
 (deftest test-*|
   (is   (= [4 2 -3]  ((*| inc dec -) 3)))
   (testing "preserves arity"
-    (is (= [2 ##Inf] (arities (*| (fn [a b]) (fn [& args])))))))
+    (is (= [2 ##Inf] (arities (*| (fn [a b]) (fn [& args]))))))
+  (testing "edge cases"
+    (is (thrown? clojure.lang.ArityException (*|)))))
 
 (deftest test-|
   (is   (= "110100"   ((| str 1 10 100))))
@@ -82,7 +89,9 @@
         1 2))
   (testing "preserves arity"
     (is (= [2]     (arities (arity-comp inc (fn [a b] (+ a b))))))
-    (is (= [##Inf] (arities (arity-comp inc (fn [& more] 0)))))))
+    (is (= [##Inf] (arities (arity-comp inc (fn [& more] 0))))))
+  (testing "edge cases"
+    (is (= identity (arity-comp)))))
 
 (deftest test-->|
   (is (= ((->| - inc inc) 4)
@@ -91,7 +100,9 @@
          ((comp - inc inc) 4)))
   (testing "preserves arity"
     (is (= [2]     (arities (->| (fn [a b] (+ a b)) inc))))
-    (is (= [##Inf] (arities (->| (fn [& args] 0) inc))))))
+    (is (= [##Inf] (arities (->| (fn [& args] 0) inc)))))
+  (testing "edge cases"
+    (is (= identity (->|)))))
 
 (deftest test-apply|
   (is (= [2 1] ((->| (fn xx [x] [x x])
@@ -122,7 +133,9 @@
     (assert-calls [:do-nothing :do-nothing]))
   (testing "preserves arity"
     (is (= [2 ##Inf] (arities (tap| (fn [a b])     (constantly 0)))))
-    (is (= [##Inf]   (arities (tap| (constantly 0) (fn [& more] more)))))))
+    (is (= [##Inf]   (arities (tap| (constantly 0) (fn [& more] more))))))
+  (testing "edge cases"
+    (is (= identity (tap|)))))
 
 (deftest test-and|
   (testing "when each predicate is true"
@@ -139,7 +152,9 @@
         (assert-calls [:is-john? :is-minor?]))))
   (testing "preserves arity"
     (is (= [2 ##Inf] (arities (and| (fn [a b] true)    (constantly true)))))
-    (is (= [##Inf]   (arities (and| (fn [& more] true) (constantly true)))))))
+    (is (= [##Inf]   (arities (and| (fn [& more] true) (constantly true))))))
+  (testing "edge cases"
+    (is (= identity (and|)))))
 
 (deftest test-or|
   (testing "when each predicate is false"
@@ -156,7 +171,9 @@
         (assert-calls [:is-not-john? :is-adult?]))))
   (testing "preserves arity"
     (is (= [2 ##Inf] (arities (or| (fn [a b] true)    (constantly true)))))
-    (is (= [##Inf]   (arities (or| (fn [& more] true) (constantly true)))))))
+    (is (= [##Inf]   (arities (or| (fn [& more] true) (constantly true))))))
+  (testing "edge cases"
+    (is (= identity (or|)))))
 
 (deftest test-context|
   (is (= [124 {}]  ((context| inc)                         123 {})))

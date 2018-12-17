@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
+## [0.1.4] - 2018-12-17
+### Fixed
+- Handle various edge cases.
+
 ## [0.1.3] - 2018-09-04
 ### Changed
 - Bump `shuriken` dependency to `0.14.9`.
