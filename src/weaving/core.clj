@@ -19,21 +19,33 @@
     (fake-arities (->> fns (mapcat arities) distinct sort)
                   #(apply (apply juxt fns) %&))))
 
-(defn ||
-  "Returns a function that behaves like `partial` but preserves arity."
-  [f & args]
-  (fake-arities (map #(- % (count args))
-                   (arities f))
-              #((apply partial f (concat args %&)))))
-
 (defn |
   "Returns a function that behaves like `partial` except that new args
   are added to the beginning of the parameter list rather than the end.
   Preserves arity."
   [f & args]
-  (fake-arities (map #(- % (count args))
-                   (arities f))
+  (fake-arities (map #(- % (count args)) (arities f))
               #((apply partial f (concat %& args)))))
+
+(defn ||
+  "Returns a function that behaves like `partial` but preserves arity."
+  [f & args]
+  (fake-arities (map #(- % (count args)) (arities f))
+              #((apply partial f (concat args %&)))))
+
+(defn ø|
+  "Unpartialize the first argument of `f`, i.e. returns a function
+  that will apply all but the first argument to `f`."
+  [f]
+  (fake-arities (arities f)
+                #(apply f (rest %&))))
+
+(defn ø||
+  "Unpartialize the last argument of `f`, i.e. returns a function
+  that will apply all but the last argument to `f`."
+  [f]
+  (fake-arities (arities f)
+                #(apply f (butlast %&))))
 
 ;; TODO: rework
 (defn •|

@@ -79,6 +79,24 @@
     (is (= [1]   (arities (|| (fn [a b c]) 1 2))))
     (is (= [0]   (arities (|| (fn [a b c]) 1 2 3))))))
 
+(deftest test-ø|
+  (is (= "234" ((ø| str) 1 2 3 4)))
+  (is (= ""    ((ø| str) 1)))
+  (is (= ""    ((ø| str))))
+  (is (= "3"   ((-> str ø| ø|) 1 2 3)))
+  (is (= ""    ((-> str ø| ø| ø|) 1 2 3)))
+  (testing "preserves arity"
+    (is (= [3] (arities (ø| (fn [a b c])))))))
+
+(deftest test-ø||
+  (is (= "123" ((ø|| str) 1 2 3 4)))
+  (is (= ""    ((ø|| str) 4)))
+  (is (= ""    ((ø|| str))))
+  (is (= "1"   ((-> str ø|| ø||) 1 2 3)))
+  (is (= ""    ((-> str ø|| ø|| ø||) 1 2 3)))
+  (testing "preserves arity"
+    (is (= [3] (arities (ø|| (fn [a b c])))))))
+
 (deftest test-•|
   (is (= {:a 1 :b 2}
          ((•| merge identity (<-| {:b 2}))

@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
+## [0.1.5] - 2019-02-05
+### Added
+- Unpartialization with `ø|` and `ø||`.
+
 ## [0.1.4] - 2018-12-17
 ### Fixed
 - Handle various edge cases.

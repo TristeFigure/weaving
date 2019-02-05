@@ -9,7 +9,7 @@ Just like **threading macros** in Clojure end with an arrow, **weaving functions
 ## Usage
 
 ```clojure
-[weaving "0.1.4"]
+[weaving "0.1.5"]
 ```
 
 ```clojure

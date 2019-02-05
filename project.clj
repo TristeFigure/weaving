@@ -1,4 +1,4 @@
-(defproject weaving "0.1.4"
+(defproject weaving "0.1.5"
   :description "Combinators to weave Clojure functions together"
   :url "https://github.com/TristeFigure/weaving"
   :license {:name "Eclipse Public License"
