@@ -2,7 +2,8 @@
   (:require [clojure.test :refer :all]
             [weaving.core :refer :all]
             [arity.core :refer [arities]]
-            [shuriken.test :refer :all]))
+            [shuriken.test :refer :all]
+            [shuriken.namespace :refer [with-ns]]))
 
 
 (def john
@@ -33,29 +34,22 @@
 
 
 (deftest test-<-|
-  (is (= 1   ((<-| 1) :ignored :ditto)))
-  (is (= [1] (arities (<-| 1)))))
+  (is (= 1   ((<-| 1) :ignored :ditto))))
 
-(deftest test-?|
-  (is (= true  ((?| 1) 1)))
-  (is (= false ((?| 2) 1)))
+(deftest test-=|
+  (is (= true  ((=| 1) 1)))
+  (is (= false ((=| 2) 1)))
   (testing "multiple equality"
-    (is (= true ((?| 2 (inc 1)) (+ 1 1)))))
+    (is (= true ((=| 2 (inc 1)) (+ 1 1)))))
   (testing "edge cases"
-    (is (= true ((?|) 1)))
-    (is (thrown? clojure.lang.ArityException ((?|))))))
+    (is (= true ((=|) 1)))
+    (is (thrown? clojure.lang.ArityException ((=|))))))
 
 (deftest test-not|
-  (is (false? ((not| number?) 3)))
-  (testing "preserves arity"
-    (is (= [1]     (arities (not| (fn [a])))))
-    (is (= [5]     (arities (not| (fn [a b c d e])))))
-    (is (= [##Inf] (arities (not| (fn [& args])))))))
+  (is (false? ((not| number?) 3))))
 
 (deftest test-*|
   (is   (= [4 2 -3]  ((*| inc dec -) 3)))
-  (testing "preserves arity"
-    (is (= [2 ##Inf] (arities (*| (fn [a b]) (fn [& args]))))))
   (testing "edge cases"
     (is (thrown? clojure.lang.ArityException (*|)))))
 
@@ -63,95 +57,59 @@
   (is   (= "110100"   ((| str 1 10 100))))
   (is   (= "100110"   ((| str 1 10) 100)))
   (is   (= "101001"   ((| str 1) 10 100)))
-  (is   (= "110100"   ((| str) 1 10 100)))
-  (testing "preserves arity"
-    (is (= [2]   (arities (| (fn [a b c]) 1))))
-    (is (= [1]   (arities (| (fn [a b c]) 1 2))))
-    (is (= [0]   (arities (| (fn [a b c]) 1 2 3))))))
+  (is   (= "110100"   ((| str) 1 10 100))))
 
 (deftest test-||
   (is   (= "110100"   ((|| str 1 10 100))))
   (is   (= "110100"   ((|| str 1 10) 100)))
   (is   (= "110100"   ((|| str 1) 10 100)))
-  (is   (= "110100"   ((|| str) 1 10 100)))
-  (testing "preserves arity"
-    (is (= [2]   (arities (|| (fn [a b c]) 1))))
-    (is (= [1]   (arities (|| (fn [a b c]) 1 2))))
-    (is (= [0]   (arities (|| (fn [a b c]) 1 2 3))))))
+  (is   (= "110100"   ((|| str) 1 10 100))))
 
 (deftest test-ø|
   (is (= "234" ((ø| str) 1 2 3 4)))
   (is (= ""    ((ø| str) 1)))
   (is (= ""    ((ø| str))))
   (is (= "3"   ((-> str ø| ø|) 1 2 3)))
-  (is (= ""    ((-> str ø| ø| ø|) 1 2 3)))
-  (testing "preserves arity"
-    (is (= [3] (arities (ø| (fn [a b c])))))))
+  (is (= ""    ((-> str ø| ø| ø|) 1 2 3))))
 
 (deftest test-ø||
   (is (= "123" ((ø|| str) 1 2 3 4)))
   (is (= ""    ((ø|| str) 4)))
   (is (= ""    ((ø|| str))))
   (is (= "1"   ((-> str ø|| ø||) 1 2 3)))
-  (is (= ""    ((-> str ø|| ø|| ø||) 1 2 3)))
-  (testing "preserves arity"
-    (is (= [3] (arities (ø|| (fn [a b c])))))))
+  (is (= ""    ((-> str ø|| ø|| ø||) 1 2 3))))
 
 (deftest test-•|
   (is (= {:a 1 :b 2}
          ((•| merge identity (<-| {:b 2}))
           {:a 1}))))
 
-(deftest test-arity-comp
-  (= 4 ((arity-comp inc (fn [a b] (+ a b)))
-        1 2))
-  (testing "preserves arity"
-    (is (= [2]     (arities (arity-comp inc (fn [a b] (+ a b))))))
-    (is (= [##Inf] (arities (arity-comp inc (fn [& more] 0))))))
-  (testing "edge cases"
-    (is (= identity (arity-comp)))))
-
 (deftest test-->|
   (is (= ((->| - inc inc) 4)
          ((comp inc inc -) 4)))
   (is (= ((->| inc inc -) 4)
          ((comp - inc inc) 4)))
-  (testing "preserves arity"
-    (is (= [2]     (arities (->| (fn [a b] (+ a b)) inc))))
-    (is (= [##Inf] (arities (->| (fn [& args] 0) inc)))))
   (testing "edge cases"
     (is (= identity (->|)))))
 
 (deftest test-apply|
   (is (= [2 1] ((->| (fn xx [x] [x x])
                      (apply| (fn xxx [a b] [(inc a) b])))
-                1)))
-  (testing "has arity 1"
-    (is (= [1] (arities (->| (fn xx [x] [x x])
-                         (apply| (fn xxx [a b] [(inc a) b]))))))))
+                1))))
 
 (deftest test-when|
   (is (= 11 ((when| number? identity inc) 10)))
-  (is (= :a ((when| number? identity inc) :a)))
-  (testing "preserves arity"
-    (is (= [2 ##Inf] (arities (when| (fn [a b] true)    (constantly :abc)))))
-    (is (= [##Inf]   (arities (when| (fn [& more] true) (constantly :abc)))))))
+  (is (= :a ((when| number? identity inc) :a))))
 
 (deftest test-if|
   (is (= 11 ((if| number? inc str) 10)))
   (is (= ":a" ((if| number? inc str) :a)))
-  (is (= :a ((if| number? inc) :a)))
-  (testing "preserves arity"
-    (is (= [2 ##Inf] (arities (if| (fn [a b] true)    (constantly :abc)))))
-    (is (= [##Inf]   (arities (if| (fn [& more] true) (constantly :abc)))))))
+  (is (= :a ((if| number? inc) :a))))
 
 (deftest test-tap|
   (with-fresh-calls
     (is (= 1 ((tap| inc do-nothing do-nothing) 1)))
     (assert-calls [:do-nothing :do-nothing]))
-  (testing "preserves arity"
-    (is (= [2 ##Inf] (arities (tap| (fn [a b])     (constantly 0)))))
-    (is (= [##Inf]   (arities (tap| (constantly 0) (fn [& more] more))))))
   (testing "edge cases"
     (is (= identity (tap|)))))
 
@@ -168,9 +126,6 @@
         (is (= false (composite john)))
         ;; stops at the predicate that fails
         (assert-calls [:is-john? :is-minor?]))))
-  (testing "preserves arity"
-    (is (= [2 ##Inf] (arities (and| (fn [a b] true)    (constantly true)))))
-    (is (= [##Inf]   (arities (and| (fn [& more] true) (constantly true))))))
   (testing "edge cases"
     (is (= identity (and|)))))
 
@@ -187,28 +142,42 @@
         (is (= true (composite john)))
         ;; stops at the predicate that fails
         (assert-calls [:is-not-john? :is-adult?]))))
-  (testing "preserves arity"
-    (is (= [2 ##Inf] (arities (or| (fn [a b] true)    (constantly true)))))
-    (is (= [##Inf]   (arities (or| (fn [& more] true) (constantly true))))))
   (testing "edge cases"
     (is (= identity (or|)))))
 
-(deftest test-context|
-  (is (= [124 {}]  ((context| inc)                         123 {})))
-  (is (= [124 {}]  ((context| (context| inc))              123 {})))
-  (is (= [124 nil] ((context| inc)                         123)))
-  (is (= [124 nil] ((context| (context| inc))              123)))
-  (is (= [0   {}]  ((context| (fn [& args] 0))             123 {})))
-  (is (= [0   nil] ((context| (fn [& args] 0))             123)))
-  (is (= [0   {}]  ((context| (fn [a b] [0 b]))            123 {})))
-  (is (= [0   nil] ((context| (fn [a b] [0 b]))            123)))
-  (is (= [0   nil] ((context| (context| (fn [a b] [0 b]))) 123)))
-  (is (= [103 {}]  ((->| (context| inc)
-                         (apply| (context| (fn [a ctx] [(inc a) ctx])))
-                         (apply| (context| (fn [a ctx] [(inc a) ctx]))))
-                    100 {})))
-  (testing "has 1 and 2 for arities"
-    (is (= [1 2] (arities (->| (context| inc))))))
-  (testing "with 1, 2 and ##Inf arities"
-    (is (= [1 {}] ((context| (fn ([a] a) ([a b] [a 0]) ([a b & c])))
-                   1 {})))))
+(deftest test-%|
+  (are [x y] (= y (with-ns 'weaving.core (macroexpand x)))
+       '(%| + %1 %2)         '(fn* ([%1 %2]     (+ %1 %2)))
+       '(%| + %  %2)         '(fn* ([%1 %2]     (+ %1 %2)))
+       '(%| + %a %b)         '(fn* ([%1a %2b]   (+ %1a %2b)))
+       ;; unused args
+       '(%| + %2b %3c)       '(fn* ([%1 %2b %3c] (+ %2b %3c)))
+       ;; a %NUM can refer to a previous %NAME
+       '(%| + %abc %2 %1)    '(fn* ([%1abc %2] (+ %1abc %2 %1abc)))
+       ;; a %NAME never refer to a previous %NUM
+       '(%| + %1 %2 %abc)    '(fn* ([%1 %2 %3abc] (+ %1 %2 %3abc)))
+       ;; but a %NAME can refer to a previous %NUMNAME
+       '(%| + %1abc %2 %abc) '(fn* ([%1abc %2] (+ %1abc %2 %1abc)))
+       ;; and a %NUMNAME can refer to a previous %NUM
+       '(%| + %1 %2 %1abc)   '(fn* ([%1 %2] (+ %1 %2 %1)))))
+
+;; TODO: finish or remove
+; (deftest test-context|
+;   (is (= [124 {}]  ((context| inc)                         123 {})))
+;   (is (= [124 {}]  ((context| (context| inc))              123 {})))
+;   (is (= [124 nil] ((context| inc)                         123)))
+;   (is (= [124 nil] ((context| (context| inc))              123)))
+;   (is (= [0   {}]  ((context| (fn [& args] 0))             123 {})))
+;   (is (= [0   nil] ((context| (fn [& args] 0))             123)))
+;   (is (= [0   {}]  ((context| (fn [a b] [0 b]))            123 {})))
+;   (is (= [0   nil] ((context| (fn [a b] [0 b]))            123)))
+;   (is (= [0   nil] ((context| (context| (fn [a b] [0 b]))) 123)))
+;   (is (= [103 {}]  ((->| (context| inc)
+;                          (apply| (context| (fn [a ctx] [(inc a) ctx])))
+;                          (apply| (context| (fn [a ctx] [(inc a) ctx]))))
+;                     100 {})))
+;   (testing "has 1 and 2 for arities"
+;     (is (= [1 2] (arities (->| (context| inc))))))
+;   (testing "with 1, 2 and ##Inf arities"
+;     (is (= [1 {}] ((context| (fn ([a] a) ([a b] [a 0]) ([a b & c])))
+;                    1 {})))))
