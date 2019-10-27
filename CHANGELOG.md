@@ -1,8 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
-## [Unreleased]
+## [0.1.6] - 2019-10-27
 ### Added
 - `%|`.
+- ClojureScript support.
 
 ### Removed
 - `arity-comp`.

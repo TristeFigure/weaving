@@ -9,12 +9,14 @@ Just like **threading macros** in Clojure end with an arrow, **weaving functions
 ## Usage
 
 ```clojure
-[weaving "0.1.5"]
+[weaving "0.1.6"]
 ```
 
 ```clojure
 (require '[weaving.core :refer :all])
 ```
+
+Supports ClojureScript.
 
 ## Showcase
 
@@ -49,7 +51,7 @@ Just like **threading macros** in Clojure end with an arrow, **weaving functions
 - other control flow: `tap|` [inspired by ruby](https://apidock.com/ruby/Object/tap).
 - `<-|` : works like `constantly`.
 - `*|`: works like `juxt`.
-- `?|`: `(?| 2)` is equivalent to `#(= % 2)`.
+- `=|`: `(=| 2)` is equivalent to `#(= % 2)`.
 - `->|`: works like `comp` but in a reverse, sane order (the same as `->`).
 - `apply|`.
 

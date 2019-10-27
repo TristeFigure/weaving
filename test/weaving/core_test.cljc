@@ -1,10 +1,39 @@
 (ns weaving.core-test
-  (:require [clojure.test :refer :all]
-            [weaving.core :refer :all]
-            [arity.core :refer [arities]]
-            [shuriken.test :refer :all]
-            [shuriken.namespace :refer [with-ns]]))
+  (:require #?(:clj  [clojure.test :refer :all]
+               :cljs [cljs.test    :refer-macros [deftest is are testing]])
+            #?(:clj  [weaving.core :refer :all]
+               :cljs [weaving.core :refer [*| <-| =| not| | || ø| ø|| ->| apply|
+                                           when| if| tap| and| or| %|]]))
+  #?(:cljs
+      (:require-macros
+        [weaving.core-test :refer [defn-call with-fresh-calls]])))
 
+(def calls
+  (atom []))
+
+(defn store-call! [v]
+  (swap! calls conj v))
+
+(defn assert-calls [vs]
+  (is (= vs @calls)))
+
+#?(:clj (defmacro with-fresh-calls [& body]
+          `(do (reset! calls [])
+               ~@body)))
+
+#?(:clj (defmacro defn-call [name params & body]
+          `(defn ~name ~params
+             (let [result# (do ~@body)]
+               (store-call! ~(keyword name))
+               result#))))
+
+#?(:clj (defmacro with-ns
+          "Evaluates body in another namespace. ns is either a namespace
+          object or a symbol.  Useful to define functions in namespaces other
+          than `*ns*`."
+          [ns & body]
+          `(binding [*ns* (find-ns ~ns)]
+             (eval (quote (do ~@body))))))
 
 (def john
   {:name "john"
@@ -34,7 +63,7 @@
 
 
 (deftest test-<-|
-  (is (= 1   ((<-| 1) :ignored :ditto))))
+  (is (= 1   ((<-| 1)))))
 
 (deftest test-=|
   (is (= true  ((=| 1) 1)))
@@ -42,16 +71,13 @@
   (testing "multiple equality"
     (is (= true ((=| 2 (inc 1)) (+ 1 1)))))
   (testing "edge cases"
-    (is (= true ((=|) 1)))
-    (is (thrown? clojure.lang.ArityException ((=|))))))
+    (is (= true ((=|) 1)))))
 
 (deftest test-not|
   (is (false? ((not| number?) 3))))
 
 (deftest test-*|
-  (is   (= [4 2 -3]  ((*| inc dec -) 3)))
-  (testing "edge cases"
-    (is (thrown? clojure.lang.ArityException (*|)))))
+  (is (= [4 2 -3]  ((*| inc dec -) 3))))
 
 (deftest test-|
   (is   (= "110100"   ((| str 1 10 100))))
@@ -79,10 +105,10 @@
   (is (= "1"   ((-> str ø|| ø||) 1 2 3)))
   (is (= ""    ((-> str ø|| ø|| ø||) 1 2 3))))
 
-(deftest test-•|
-  (is (= {:a 1 :b 2}
-         ((•| merge identity (<-| {:b 2}))
-          {:a 1}))))
+#?(:clj (deftest test-•|
+          (is (= {:a 1 :b 2}
+                 ((•| merge identity (<-| {:b 2}))
+                  {:a 1})))))
 
 (deftest test-->|
   (is (= ((->| - inc inc) 4)
@@ -102,9 +128,9 @@
   (is (= :a ((when| number? identity inc) :a))))
 
 (deftest test-if|
-  (is (= 11 ((if| number? inc str) 10)))
+  (is (= 11   ((if| number? inc str) 10)))
   (is (= ":a" ((if| number? inc str) :a)))
-  (is (= :a ((if| number? inc) :a))))
+  (is (= :a   ((if| number? inc) :a))))
 
 (deftest test-tap|
   (with-fresh-calls
@@ -146,7 +172,8 @@
     (is (= identity (or|)))))
 
 (deftest test-%|
-  (are [x y] (= y (with-ns 'weaving.core (macroexpand x)))
+  (are [x y] (= y #?(:clj  (with-ns 'weaving.core (macroexpand x))
+                     :cljs (macroexpand x)))
        '(%| + %1 %2)         '(fn* ([%1 %2]     (+ %1 %2)))
        '(%| + %  %2)         '(fn* ([%1 %2]     (+ %1 %2)))
        '(%| + %a %b)         '(fn* ([%1a %2b]   (+ %1a %2b)))
@@ -161,23 +188,23 @@
        ;; and a %NUMNAME can refer to a previous %NUM
        '(%| + %1 %2 %1abc)   '(fn* ([%1 %2] (+ %1 %2 %1)))))
 
-;; TODO: finish or remove
-; (deftest test-context|
-;   (is (= [124 {}]  ((context| inc)                         123 {})))
-;   (is (= [124 {}]  ((context| (context| inc))              123 {})))
-;   (is (= [124 nil] ((context| inc)                         123)))
-;   (is (= [124 nil] ((context| (context| inc))              123)))
-;   (is (= [0   {}]  ((context| (fn [& args] 0))             123 {})))
-;   (is (= [0   nil] ((context| (fn [& args] 0))             123)))
-;   (is (= [0   {}]  ((context| (fn [a b] [0 b]))            123 {})))
-;   (is (= [0   nil] ((context| (fn [a b] [0 b]))            123)))
-;   (is (= [0   nil] ((context| (context| (fn [a b] [0 b]))) 123)))
-;   (is (= [103 {}]  ((->| (context| inc)
-;                          (apply| (context| (fn [a ctx] [(inc a) ctx])))
-;                          (apply| (context| (fn [a ctx] [(inc a) ctx]))))
-;                     100 {})))
-;   (testing "has 1 and 2 for arities"
-;     (is (= [1 2] (arities (->| (context| inc))))))
-;   (testing "with 1, 2 and ##Inf arities"
-;     (is (= [1 {}] ((context| (fn ([a] a) ([a b] [a 0]) ([a b & c])))
-;                    1 {})))))
+; ;; TODO: finish or remove
+; ; (deftest test-context|
+; ;   (is (= [124 {}]  ((context| inc)                         123 {})))
+; ;   (is (= [124 {}]  ((context| (context| inc))              123 {})))
+; ;   (is (= [124 nil] ((context| inc)                         123)))
+; ;   (is (= [124 nil] ((context| (context| inc))              123)))
+; ;   (is (= [0   {}]  ((context| (fn [& args] 0))             123 {})))
+; ;   (is (= [0   nil] ((context| (fn [& args] 0))             123)))
+; ;   (is (= [0   {}]  ((context| (fn [a b] [0 b]))            123 {})))
+; ;   (is (= [0   nil] ((context| (fn [a b] [0 b]))            123)))
+; ;   (is (= [0   nil] ((context| (context| (fn [a b] [0 b]))) 123)))
+; ;   (is (= [103 {}]  ((->| (context| inc)
+; ;                          (apply| (context| (fn [a ctx] [(inc a) ctx])))
+; ;                          (apply| (context| (fn [a ctx] [(inc a) ctx]))))
+; ;                     100 {})))
+; ;   (testing "has 1 and 2 for arities"
+; ;     (is (= [1 2] (arities (->| (context| inc))))))
+; ;   (testing "with 1, 2 and ##Inf arities"
+; ;     (is (= [1 {}] ((context| (fn ([a] a) ([a b] [a 0]) ([a b & c])))
+; ;                    1 {})))))

@@ -1,6 +1,7 @@
 (ns weaving.core
   (:require [clojure.set :as set]
-            [arity.core :refer [arities]]))
+            [clojure.walk :refer [postwalk]]
+            #?(:clj [arity.core :refer [arities]])))
 
 (defn =|
   "Returns a function `(g x)` that returns `(= x v)`."
@@ -41,13 +42,14 @@
   #(apply f (butlast %&)))
 
 ;; TODO: rework
-(defn •|
-  "Transforms a function so that its arguments become functions that
-  will be passed the woven value and are expected to return the argument's
-  value."
-  [f & fs]
-  (fn [& args]
-    (apply f (map #(apply % args) fs))))
+#?(:clj
+    (defn •|
+      "Transforms a function so that its arguments become functions that
+      will be passed the woven value and are expected to return the argument's
+      value."
+      [f & fs]
+      (fn [& args]
+        (apply f (map #(apply % args) fs)))))
 
 (defn ->|
   "Returns a function that behaves like `comp` but composes functions
@@ -137,6 +139,10 @@
 ;; TODO: nested calls to (%| ...) and #(...)
 ;; IMP:  some computations are repeated unnecessarily
 ;; IMP:  use a dance
+(defn parse-int [x]
+  #?(:clj  (Integer/parseInt x)
+     :cljs (js/parseInt x)))
+
 (defmacro %| [& expr]
   (let [%-syms      (atom {})
         args-by-num (fn [m]
@@ -153,7 +159,7 @@
                                     (when-let [v (re-matches #"%(\d+)?(\D.*)?"
                                                              (name form))]
                                       (update
-                                        v 1 #(when % (Integer/parseInt %)))))]
+                                        v 1 #(when % (parse-int %)))))]
               (letfn [(handle-n [m]
                                 (if (and n (not (m n)))
                                   (assoc m n (symbol (str \% n nme)))
@@ -178,7 +184,7 @@
         used-args     (vals %-syms)
         arg-count     (->> used-args sort last name
                            (re-matches #"%(\d+).*")
-                           second Integer/parseInt)
+                           second parse-int)
         args          (vec (for [n (range 1 (inc arg-count))]
                              (get %-syms n (symbol (str \% n)))))]
     `(fn ~args
@@ -204,31 +210,31 @@
     #(apply wrap-f %&)))
 
 ;; TODO: document
-(defn context| [f]
-  (let [ar (set (arities f))
-        mono-ar (or (contains? ar 1)
-                    (contains? ar ##Inf))
-        bi-ar (and (contains? ar 2)
-                   (not (contains? ar ##Inf)))
-        new-f (case [mono-ar bi-ar]
-                [true true]   f
-                [true false]  (fn
-                                ([x]     (wrap-context [(f x) nil]))
-                                ([x ctx] (wrap-context [(f x) ctx])))
-                [false true]  (fn
-                                ([x]     (wrap-context [(f x) nil]))
-                                ([x ctx] (f x ctx)))
-                [false false] (fn
-                                ([x]     (wrap-context [(f x) nil]))
-                                ([x ctx] (wrap-context [(f x) ctx]))))]
-    #(apply  (context-wrapper new-f)  %&)))
+#?(:clj (defn context| [f]
+          (let [ar (set (arities f))
+                mono-ar (or (contains? ar 1)
+                            (contains? ar ##Inf))
+                bi-ar (and (contains? ar 2)
+                           (not (contains? ar ##Inf)))
+                new-f (case [mono-ar bi-ar]
+                        [true true]   f
+                        [true false]  (fn
+                                        ([x]     (wrap-context [(f x) nil]))
+                                        ([x ctx] (wrap-context [(f x) ctx])))
+                        [false true]  (fn
+                                        ([x]     (wrap-context [(f x) nil]))
+                                        ([x ctx] (f x ctx)))
+                        [false false] (fn
+                                        ([x]     (wrap-context [(f x) nil]))
+                                        ([x ctx] (wrap-context [(f x) ctx]))))]
+            #(apply  (context-wrapper new-f)  %&))))
 
 ;; TODO: test and document
-(defn warp| [weaver warper]
-  (fn [& fns]
-    (apply weaver (map (fn [f]
-                         #(apply warper f %&))
-                       fns))))
+#?(:clj (defn warp| [weaver warper]
+          (fn [& fns]
+            (apply weaver (map (fn [f]
+                                 #(apply warper f %&))
+                               fns)))))
 ;      ;   (if (even? x)
 ;      ;     (f x)
 ;      ;     x))
