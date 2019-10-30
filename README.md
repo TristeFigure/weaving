@@ -9,7 +9,7 @@ Just like **threading macros** in Clojure end with an arrow, **weaving functions
 ## Usage
 
 ```clojure
-[weaving "0.1.6"]
+[weaving "0.1.7"]
 ```
 
 ```clojure
@@ -51,6 +51,7 @@ Supports ClojureScript.
 - other control flow: `tap|` [inspired by ruby](https://apidock.com/ruby/Object/tap).
 - `<-|` : works like `constantly`.
 - `*|`: works like `juxt`.
+- `juxtm|`: works like `juxt` but accepts and returns a map.
 - `=|`: `(=| 2)` is equivalent to `#(= % 2)`.
 - `->|`: works like `comp` but in a reverse, sane order (the same as `->`).
 - `apply|`.

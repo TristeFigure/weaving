@@ -18,6 +18,20 @@
   (let [fns (cons f more-fns)]
     #(apply (apply juxt fns) %&)))
 
+(defn juxtm|
+  "Like juxt except that functions are passed as values of a map whose shape
+  is used to return their results, under the same key.
+  The map can be an explicit man (one argument) or a flat, implicit map
+  (variadic arguments)."
+  ([m]
+   (fn [& args]
+     (->> m
+          (map (fn [[k v]]
+                 [k (apply v args)]))
+          (into (empty m)))))
+  ([k v & {:as more-kvs}]
+   (juxtm| (merge {k v} more-kvs))))
+
 (defn |
   "Returns a function like the result of `partial` except that new args
   are added to the beginning of the parameter list rather than the end."

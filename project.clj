@@ -1,4 +1,4 @@
-(defproject weaving "0.1.6"
+(defproject weaving "0.1.7"
   :description "Combinators to weave Clojure[Script] functions together"
   :url "https://github.com/TristeFigure/weaving"
   :license {:name "Eclipse Public License"
@@ -9,7 +9,7 @@
   :plugins [[lein-codox     "0.10.3"]
             [lein-cljsbuild "1.1.7"]
             [lein-doo       "0.1.11"]]
-  :hooks [leiningen.cljsbuild]
+  :prep-tasks ["compile" ["cljsbuild" "once"]]
   :cljsbuild {:builds {}}
 
   :profiles

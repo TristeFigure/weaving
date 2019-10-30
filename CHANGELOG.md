@@ -1,5 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
+
+## [0.1.7] - 2019-10-29
+### Added
+- `juxtm|`.
+
 ## [0.1.6] - 2019-10-27
 ### Added
 - `%|`.

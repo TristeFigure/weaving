@@ -2,8 +2,8 @@
   (:require #?(:clj  [clojure.test :refer :all]
                :cljs [cljs.test    :refer-macros [deftest is are testing]])
             #?(:clj  [weaving.core :refer :all]
-               :cljs [weaving.core :refer [*| <-| =| not| | || ø| ø|| ->| apply|
-                                           when| if| tap| and| or| %|]]))
+               :cljs [weaving.core :refer [*| juxtm| <-| =| not| | || ø| ø|| ->|
+                                           apply| when| if| tap| and| or| %|]]))
   #?(:cljs
       (:require-macros
         [weaving.core-test :refer [defn-call with-fresh-calls]])))
@@ -78,6 +78,12 @@
 
 (deftest test-*|
   (is (= [4 2 -3]  ((*| inc dec -) 3))))
+
+(deftest test-juxtm|
+  (testing "with an explicit map"
+    (is (= {:a 2 :b 0} ((juxtm| {:a inc :b dec}) 1))))
+  (testing "with a flat, impicit map"
+    (is (= {:a 2 :b 0} ((juxtm|  :a inc :b dec ) 1)))))
 
 (deftest test-|
   (is   (= "110100"   ((| str 1 10 100))))
