@@ -1,6 +1,12 @@
 # Change Log
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
+## [0.2.0] - 2020-07-29
+### Added
+- `call`.
+- `args|`.
+- `in|`.
+
 ## [0.1.7] - 2019-10-29
 ### Added
 - `juxtm|`.

@@ -1,6 +1,7 @@
 (ns weaving.core
   (:require [clojure.set :as set]
             [clojure.walk :refer [postwalk]]
+            [clojure.spec.alpha :as s]
             #?(:clj [arity.core :refer [arities]])))
 
 (defn =|
@@ -106,9 +107,15 @@
   [f]
   #(apply f %))
 
+(defn args|
+  "Transforms a function `f` accepting any number of arguments into a
+  function working on these arguments as a list."
+  [f]
+  #(f %&))
+
 (defn tap|
-  "Returns a function that calls `fns` in order,
-  passing to each one its argument before returning it."
+  "Returns a function that calls `fns` in order, passing to each one
+  its argument before returning it."
   ([] identity)
   ([& fns]
    #(do (last ((apply *| (map apply| fns)) %&))
@@ -148,6 +155,70 @@
              (if (seq more)
                (recur more)
                result))))))))
+
+(defn call
+  "Calls function `f` by applying `args`."
+  [f & args]
+  (apply f args))
+
+
+;; TODO: taken from shuriken
+(defn- get-nth
+  "Like get but also works on lists."
+  ([coll k] (get-nth coll k nil))
+  ([coll k not-found]
+   (if (or (associative? coll) (nil? coll))
+     (get coll k not-found)
+     (nth coll k not-found))))
+
+(defn- assoc-nth
+  "Like assoc but also works on lists.
+  Optionally accepts an initial `not-found` argument (defaults to `nil`)."
+  ([coll n v] (assoc-nth {} coll n v))
+  ([not-found coll n v]
+   (let [coll (if (nil? coll) not-found coll)]
+     (if (associative? coll)
+       (assoc coll n v)
+       (do (when-not (<= n (count coll))
+             (throw (new IndexOutOfBoundsException)))
+           (concat (take n coll)
+                   [v]
+                   (drop (inc n) coll)))))))
+
+(defn- update-nth-in
+  "Like update-in but also works on lists.
+  Optionally accepts an initial `not-found-f` argument, a fn of signature
+    `(fn [path coll])`
+  (defaults to `(constantly {})`)."
+  [& args]
+  (let [{:keys [not-found-f m ks f args] :or {not-found-f (constantly {})}}
+        (s/conform (s/cat
+                     :not-found-f (s/? ifn?)
+                     :m           (or| coll? nil?)
+                     :ks          sequential?
+                     :f           ifn?
+                     :args        (s/* any?))
+                   args)
+        up (fn up [pth m ks f args]
+             (let [[k & ks] ks
+                   pth (conj pth k)]
+               (if ks
+                 (assoc-nth (not-found-f pth m) m k
+                            (up pth (get-nth m k) ks f args))
+                 (assoc-nth (not-found-f pth m) m k
+                            (apply f (get-nth m k) args)))))]
+    (up [] m ks f args)))
+
+(defn in|
+  "Transforms a one-argument function `f` into a function receiving
+  one collection and applying `f` to the value at the location
+  denoted by `path` in this collection.
+  Multiple path+function pairs can follow. "
+  [path f & more]
+  (let [g #(update-nth-in % path f)]
+    (if (seq more)
+      (->| g (apply in| more))
+      g)))
 
 
 ;; TODO: nested calls to (%| ...) and #(...)
@@ -256,9 +327,7 @@
 ;      )
 ;    x))
 
-; (defn call [f & args]
-;   (apply f args))
-
+;; replaced by in|
 ; (defn bounce| [pos f]
 ;   (fn [& args]
 ;     (let [pos (if (sequential? pos) pos (vector pos))]
@@ -385,5 +454,3 @@
 ;                       #(do %&)
 ;                       {:a 1 :b 2}
 ;                       {:a 1 :b 2 :c 3}))))))
-
-; (run-tests)

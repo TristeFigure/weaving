@@ -3,7 +3,8 @@
                :cljs [cljs.test    :refer-macros [deftest is are testing]])
             #?(:clj  [weaving.core :refer :all]
                :cljs [weaving.core :refer [*| juxtm| <-| =| not| | || ø| ø|| ->|
-                                           apply| when| if| tap| and| or| %|]]))
+                                           apply| args| when| if| tap| and| or|
+                                           call in| %|]]))
   #?(:cljs
       (:require-macros
         [weaving.core-test :refer [defn-call with-fresh-calls]])))
@@ -129,6 +130,9 @@
                      (apply| (fn xxx [a b] [(inc a) b])))
                 1))))
 
+(deftest test-args|
+  (is (= #{1 2 3} ((args| set) 1 2 3))))
+
 (deftest test-when|
   (is (= 11 ((when| number? identity inc) 10)))
   (is (= :a ((when| number? identity inc) :a))))
@@ -176,6 +180,17 @@
         (assert-calls [:is-not-john? :is-adult?]))))
   (testing "edge cases"
     (is (= identity (or|)))))
+
+(deftest test-call
+  (is (= 2 (call inc 1))))
+
+(deftest test-in|
+  (is (= [0 [0 [1]]]
+         ((in| [1 1 0] inc) [0 [0 [0]]])))
+  (is (= [0 [0 {:a [0 1] :b 1}]]
+         ((in| [1 1 :a 1] inc
+               [1 1 :b]   inc)
+          [0 [0 {:a [0 0] :b 0}]]))))
 
 (deftest test-%|
   (are [x y] (= y #?(:clj  (with-ns 'weaving.core (macroexpand x))
