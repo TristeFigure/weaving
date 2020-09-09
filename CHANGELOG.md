@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
+## [0.2.3] - 2020-09-09
+### Changed
+- Renamed `args|` to `unapply|`.
+- Renamed `•|` to `args|`.
+
 ## [0.2.2] - 2020-09-09
 ### Removed
 - Dependency on `arity`.
