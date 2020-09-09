@@ -22,7 +22,7 @@
 (defn juxtm|
   "Like juxt except that functions are passed as values of a map whose shape
   is used to return their results, under the same key.
-  The map can be an explicit man (one argument) or a flat, implicit map
+  The map can be an explicit map (one argument) or a flat, implicit map
   (variadic arguments)."
   ([m]
    (fn [& args]
@@ -180,7 +180,8 @@
      (if (associative? coll)
        (assoc coll n v)
        (do (when-not (<= n (count coll))
-             (throw (new IndexOutOfBoundsException)))
+             (throw (new #?@(:clj [IndexOutOfBoundsException]
+                             :cljs [js/Error "out of bounds"]))))
            (concat (take n coll)
                    [v]
                    (drop (inc n) coll)))))))
@@ -274,58 +275,6 @@
                              (get %-syms n (symbol (str \% n)))))]
     `(fn ~args
        ~new-expr)))
-
-(defn- wrap-context [[form ctx]]
-  [::context form ctx])
-
-(defn- unwrap-context [x]
-  (-> x rest vec))
-
-(defn- wrapped-context? [x]
-  (and (vector? x)
-       (-> x first (= ::context))))
-
-(defn- context-wrapper [f]
-  (let [wrap-f (fn wrap
-                 ([form]     (wrap form nil))
-                 ([form ctx] (let [result (f form ctx)]
-                               (if (wrapped-context? result)
-                                 (unwrap-context result)
-                                 result))))]
-    #(apply wrap-f %&)))
-
-;; TODO: document
-#?(:clj (defn context| [f]
-          (let [ar (set (arities f))
-                mono-ar (or (contains? ar 1)
-                            (contains? ar ##Inf))
-                bi-ar (and (contains? ar 2)
-                           (not (contains? ar ##Inf)))
-                new-f (case [mono-ar bi-ar]
-                        [true true]   f
-                        [true false]  (fn
-                                        ([x]     (wrap-context [(f x) nil]))
-                                        ([x ctx] (wrap-context [(f x) ctx])))
-                        [false true]  (fn
-                                        ([x]     (wrap-context [(f x) nil]))
-                                        ([x ctx] (f x ctx)))
-                        [false false] (fn
-                                        ([x]     (wrap-context [(f x) nil]))
-                                        ([x ctx] (wrap-context [(f x) ctx]))))]
-            #(apply  (context-wrapper new-f)  %&))))
-
-;; TODO: test and document
-#?(:clj (defn warp| [weaver warper]
-          (fn [& fns]
-            (apply weaver (map (fn [f]
-                                 #(apply warper f %&))
-                               fns)))))
-;      ;   (if (even? x)
-;      ;     (f x)
-;      ;     x))
-;      ; inc
-;      )
-;    x))
 
 ;; replaced by in|
 ; (defn bounce| [pos f]
