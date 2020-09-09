@@ -56,14 +56,11 @@
   #(apply f (butlast %&)))
 
 ;; TODO: rework
-#?(:clj
-    (defn •|
-      "Transforms a function so that its arguments become functions that
-      will be passed the woven value and are expected to return the argument's
-      value."
-      [f & fs]
-      (fn [& args]
-        (apply f (map #(apply % args) fs)))))
+(defn args| [f & fs]
+  (fn [& args]
+    "Returns a function that forwards its args to each `fs` and then applies
+    the results in order to `f`."
+    (apply f (map (| apply args) fs))))
 
 (defn ->|
   "Returns a function that behaves like `comp` but composes functions
@@ -106,7 +103,7 @@
   [f]
   #(apply f %))
 
-(defn args|
+(defn unapply|
   "Transforms a function `f` accepting any number of arguments into a
   function working on these arguments as a list."
   [f]

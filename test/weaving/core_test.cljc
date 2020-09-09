@@ -1,10 +1,9 @@
 (ns weaving.core-test
   (:require #?(:clj  [clojure.test :refer :all]
                :cljs [cljs.test    :refer-macros [deftest is are testing]])
-            #?(:clj  [weaving.core :refer :all]
-               :cljs [weaving.core :refer [*| juxtm| <-| =| not| | || ø| ø|| ->|
-                                           apply| args| when| if| tap| and| or|
-                                           call in| %|]]))
+            [weaving.core :refer [*| juxtm| <-| =| not| | || ø| ø|| ->|
+                                  apply| unapply| when| if| tap| and|
+                                  or| call in| %| args|]])
   #?(:cljs
       (:require-macros
         [weaving.core-test :refer [defn-call with-fresh-calls]])))
@@ -112,10 +111,10 @@
   (is (= "1"   ((-> str ø|| ø||) 1 2 3)))
   (is (= ""    ((-> str ø|| ø|| ø||) 1 2 3))))
 
-#?(:clj (deftest test-•|
-          (is (= {:a 1 :b 2}
-                 ((•| merge identity (<-| {:b 2}))
-                  {:a 1})))))
+(deftest test-args|
+  (is (= {:a 1 :b 2}
+         ((args| merge identity (<-| {:b 2}))
+          {:a 1}))))
 
 (deftest test-->|
   (is (= ((->| - inc inc) 4)
@@ -130,8 +129,8 @@
                      (apply| (fn xxx [a b] [(inc a) b])))
                 1))))
 
-(deftest test-args|
-  (is (= #{1 2 3} ((args| set) 1 2 3))))
+(deftest test-unapply|
+  (is (= #{1 2 3} ((unapply| set) 1 2 3))))
 
 (deftest test-when|
   (is (= 11 ((when| number? identity inc) 10)))
