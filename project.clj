@@ -1,11 +1,10 @@
-(defproject weaving "0.2.1"
+(defproject weaving "0.2.2"
   :description "Combinators to weave Clojure[Script] functions together"
   :url "https://github.com/TristeFigure/weaving"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure        "1.10.0"   :scope "provided"]
-                 [org.clojure/clojurescript  "1.10.520" :scope "provided"]
-                 [arity                      "0.2.0"]]
+                 [org.clojure/clojurescript  "1.10.520" :scope "provided"]]
   :plugins [[lein-codox     "0.10.3"]
             [lein-cljsbuild "1.1.7"]
             [lein-doo       "0.1.11"]]

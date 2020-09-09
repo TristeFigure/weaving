@@ -1,8 +1,7 @@
 (ns weaving.core
   (:require [clojure.set :as set]
             [clojure.walk :refer [postwalk]]
-            [clojure.spec.alpha :as s]
-            #?(:clj [arity.core :refer [arities]])))
+            [clojure.spec.alpha :as s]))
 
 (defn =|
   "Returns a function `(g x)` that returns `(= x v)`."
