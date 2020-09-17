@@ -3,7 +3,7 @@
                :cljs [cljs.test    :refer-macros [deftest is are testing]])
             [weaving.core :refer [*| juxtm| <-| =| not| | || ø| ø|| ->|
                                   apply| unapply| when| if| tap| and|
-                                  or| call in| %| args|]])
+                                  or| call in| %| args| each-arg|]])
   #?(:cljs
       (:require-macros
         [weaving.core-test :refer [defn-call with-fresh-calls]])))
@@ -115,6 +115,11 @@
   (is (= {:a 1 :b 2}
          ((args| merge identity (<-| {:b 2}))
           {:a 1}))))
+
+(deftest test-each-arg|
+  (is (= 3
+         ((each-arg| + second)
+          '[a 1] '[b 2]))))
 
 (deftest test-->|
   (is (= ((->| - inc inc) 4)

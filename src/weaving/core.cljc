@@ -57,10 +57,16 @@
 
 ;; TODO: rework
 (defn args| [f & fs]
+  "Returns a function that forwards its args to each `fs` and then passes
+  the results to `f` in order."
   (fn [& args]
-    "Returns a function that forwards its args to each `fs` and then applies
-    the results in order to `f`."
     (apply f (map (| apply args) fs))))
+
+(defn each-arg| [f arg-f]
+  "Returns a function that forwards each of its args to `arg-f` and then
+  passes the results to `f` in order."
+  (fn [& args]
+    (apply f (map arg-f args))))
 
 (defn ->|
   "Returns a function that behaves like `comp` but composes functions
